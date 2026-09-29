@@ -1,0 +1,39 @@
+# One-click deploy on Render: New → Blueprint → point at this repo.
+# After the first deploy set APP_URL to the service URL (e.g. https://forge5.onrender.com) and,
+# for real emails, SMTP_URL + MAIL_FROM. ADMIN_PASSWORD is generated — read it in the dashboard.
+services:
+  - type: web
+    name: forge5
+    runtime: node
+    plan: starter
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: node dist/server/src/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: forge5-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "false" # internal Render connection; set "true" if you use the external URL
+      - key: TRUST_PROXY
+        value: "1"
+      - key: APP_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: SMTP_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: .edu
+
+databases:
+  - name: forge5-db
+    databaseName: forge5
+    plan: basic-256mb
